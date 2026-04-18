@@ -68,7 +68,7 @@ internal class Program
         // Huvudmeny
         while (true)
         {
-            Console.WriteLine("1 = Customers | 2 Orders | 3 Product | 5 = exit");
+            Console.WriteLine("1 = Customers | 2 Orders | 3 Product | 4 Category | 5 = exit");
             var huvudmeny = Console.ReadLine() ?? string.Empty;
 
             switch (huvudmeny)
@@ -83,6 +83,9 @@ internal class Program
 
                 case "3":
                     await ProductMenuAsync();
+                    break;
+                case "4":
+                    await CategoryMenuAsync();
                     break;
 
                 case "5":
@@ -149,13 +152,31 @@ internal class Program
     {
         while (true)
         {
-            Console.WriteLine("1 = ListProduct | 5 = return");
+            Console.WriteLine("1 = ListProduct | 2 AddProduct | 3 = EditProduct | 4 = DeleteProduct | 5 = return");
             var productMenu = Console.ReadLine() ?? string.Empty;
 
             switch (productMenu)
             {
                 case "1":
                     await ProductMethod.ListProductsAsync();
+                    break;
+                case "2":
+                    await ProductMethod.AddProductAsync();
+                    break;
+                case "3":
+                   // await ProductMethod.EditProductAsync();
+                   Console.Write("ProductId: ");
+                   if (int.TryParse(Console.ReadLine(), out var editId))
+                       await ProductMethod.EditProductAsync(editId);
+                   else
+                       Console.WriteLine("Invalid id");
+                    break;
+                case "4":
+                    Console.Write("ProductId: ");
+                    if (int.TryParse(Console.ReadLine(), out var deleteId))
+                        await ProductMethod.DeleteProductAsync(deleteId);
+                    else
+                        Console.WriteLine("Invalid id");
                     break;
 
                 case "5":
@@ -199,6 +220,44 @@ internal class Program
                     Console.WriteLine("Returning...");
                     return;
 
+                default:
+                    Console.WriteLine("Please enter a valid option");
+                    break;
+            }
+        }
+    }
+    // NYTT: Meny för full CRUD på kategorier
+    private static async Task CategoryMenuAsync()
+    {
+        while (true)
+        {
+            Console.WriteLine("1 = ListCategories | 2 = AddCategory | 3 = EditCategory | 4 = DeleteCategory | 5 = Return");
+            var categoryMenu = Console.ReadLine() ?? string.Empty;
+
+            switch (categoryMenu)
+            {
+                case "1":
+                    await CategoryMethod.ListCategoriesAsync();
+                    break;
+                case "2":
+                    await CategoryMethod.AddCategoryAsync();
+                    break;
+                case "3":
+                    Console.Write("CategoryId: ");
+                    if (int.TryParse(Console.ReadLine(), out var editId))
+                        await CategoryMethod.EditCategoryAsync(editId);
+                    else
+                        Console.WriteLine("Invalid id");
+                    break;
+                case "4":
+                    Console.Write("CategoryId: ");
+                    if (int.TryParse(Console.ReadLine(), out var deleteId))
+                        await CategoryMethod.DeleteCategoryAsync(deleteId);
+                    else
+                        Console.WriteLine("Invalid id");
+                    break;
+                case "5":
+                    return;
                 default:
                     Console.WriteLine("Please enter a valid option");
                     break;

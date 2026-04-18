@@ -92,9 +92,10 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
             .OnDelete(DeleteBehavior.Cascade);
         // Product 1 - M orderRows
         e.HasOne(x => x.Product)
-            .WithMany()
+            .WithMany(x => x.OrderRows)
             .HasForeignKey(x => x.ProductId)
             .OnDelete(DeleteBehavior.Restrict);
+        
     });
 }
 }
