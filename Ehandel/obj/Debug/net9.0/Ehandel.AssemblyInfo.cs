@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Ehandel")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c8eb919d884a46c9a8b6097db592c32a29d6d822")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+10084cc1cca127368f9a9acbd68b1e5dfa4b88ca")]
 [assembly: System.Reflection.AssemblyProductAttribute("Ehandel")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Ehandel")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

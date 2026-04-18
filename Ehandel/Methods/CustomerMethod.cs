@@ -106,24 +106,30 @@ public class CustomerMethod
 
         if (string.IsNullOrEmpty(name) || name.Length > 100)
         {
-            Console.WriteLine("Name is required.");
+            Console.WriteLine("Name is required and max 100 chars.");
             return;
         }
 
         Console.Write("Enter Customer Email: ");
         var email = Console.ReadLine() ?? string.Empty;
 
-        if (string.IsNullOrEmpty(email) || email.Length > 250)
+        if (string.IsNullOrEmpty(email) || email.Length > 100)
         {
-            Console.WriteLine("Email is required.");
+            Console.WriteLine("Email is required and max 100 chars.");
+            return;
+        }
+        var emailExists = await db.Customers.AnyAsync(c => c.Email == email);
+        if (emailExists)
+        {
+            Console.WriteLine("Email already exists.");
             return;
         }
 
         Console.Write("City: ");
         var city = Console.ReadLine() ?? string.Empty;
-        if (city.Length > 250)
+        if (city.Length > 100)
         {
-            Console.WriteLine("City name can't be longer than 250 characters.");
+            Console.WriteLine("City name can't be longer than 100 characters.");
             return;
         }
 
@@ -161,6 +167,11 @@ public class CustomerMethod
         var name = Console.ReadLine()?.Trim() ?? string.Empty;
         if (!string.IsNullOrEmpty(name))
         {
+            if (name.Length > 100)
+            {
+                Console.WriteLine("Name can be max 100 chars.");
+                return;
+            }
             customer.Name = name;
         }
 
@@ -168,6 +179,20 @@ public class CustomerMethod
         var email = Console.ReadLine()?.Trim() ?? string.Empty;
         if (!string.IsNullOrEmpty(email))
         {
+            if (email.Length > 100)
+            {
+                Console.WriteLine("Email can be max 100 chars.");
+                return;
+            }
+            var emailExists = await db.Customers
+                .AnyAsync(c => c.Email == email && c.CustomerId != customerId);
+
+            if (emailExists)
+            {
+                Console.WriteLine("Email already exists.");
+                return;
+            }
+
             customer.Email = email;
         }
 
@@ -175,6 +200,11 @@ public class CustomerMethod
         var city = Console.ReadLine()?.Trim() ?? string.Empty;
         if (!string.IsNullOrEmpty(city))
         {
+            if (city.Length > 100)
+            {
+                Console.WriteLine("City can be max 100 chars.");
+                return;
+            }
             customer.City = city;
         }
 
