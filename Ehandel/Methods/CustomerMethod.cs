@@ -20,7 +20,8 @@ public class CustomerMethod
         Console.WriteLine("Id |   Name   |   City    | Email");
         foreach (var customer in customers)
         {
-            Console.WriteLine($"{customer.CustomerId} |  {customer.Name} |   {customer.City}    | {customer.Email}");
+            var email = EncryptionHelper.Decrypt(customer.Email);
+            Console.WriteLine($"{customer.CustomerId} |  {customer.Name} |   {customer.City}    | {email}");
 
             if (customer.Orders != null && customer.Orders.Count > 0)
             {
