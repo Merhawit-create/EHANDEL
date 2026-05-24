@@ -1,4 +1,5 @@
-﻿using Ehandel.Models;
+﻿using Ehandel.Helpers;
+using Ehandel.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ehandel.Methods;
@@ -22,11 +23,21 @@ public class OrderMethod
             .Take(pageSize)
 
             .ToListAsync();
+        if (totalPages == 0)
+        {
+            Console.WriteLine("No orders found.");
+            return;
+        }
         Console.WriteLine($"Page {page} / {totalPages}, pageSize = {pageSize}");
         foreach (var order in orders)
         {
+            
+            var decryptedEmail = order.Customer != null
+                ? EncryptionHelper.Decrypt(order.Customer.Email)
+                : "No Email";
+
             Console.WriteLine(
-                $"{order.OrderId} | {order.OrderDate} | {order.TotalAmount:c} | {order.Customer?.Email}");
+                $"{order.OrderId} | {order.OrderDate} | {order.TotalAmount:c} | {decryptedEmail}");
         }
     }
 

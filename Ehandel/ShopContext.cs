@@ -42,12 +42,17 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
         e.Property(x => x.Name)
             .IsRequired().HasMaxLength(100);
         e.Property(x => x.Email)
-            .IsRequired().HasMaxLength(100);
+            .IsRequired().HasMaxLength(300);
         e.Property(x => x.City).HasMaxLength(100);
+        
+        e.Property(x => x.PasswordHash)
+            .IsRequired();
 
+        e.Property(x => x.PasswordSalt)
+            .IsRequired();
 
         e.HasIndex(x => x.Email).IsUnique();
-        e.HasMany(x => x.Orders); 
+       
     });
     
     modelBuilder.Entity<Product>(e =>

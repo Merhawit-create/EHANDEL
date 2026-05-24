@@ -84,7 +84,8 @@ public class CustomerMethod
 
         foreach (var c in customers)
         {
-            Console.WriteLine($"{c.CustomerId} |  {c.Name} | {c.City} | {c.Email}");
+            var email = EncryptionHelper.Decrypt(c.Email);
+            Console.WriteLine($"{c.CustomerId} |  {c.Name} | {c.City} | {email}");
 
             // NYTT: Om du vill visa ordrar här också (som i ListCustomers)
             if (c.Orders != null && c.Orders.Count > 0)
@@ -193,7 +194,7 @@ public class CustomerMethod
             customer.Name = name;
         }
 
-        Console.WriteLine("Current Customer Email: " + customer.Email);
+        Console.WriteLine("Current Customer Email: " +EncryptionHelper.Decrypt(customer.Email));
         var email = Console.ReadLine()?.Trim() ?? string.Empty;
         if (!string.IsNullOrEmpty(email))
         {
@@ -202,8 +203,9 @@ public class CustomerMethod
                 Console.WriteLine("Email can be max 100 chars.");
                 return;
             }
+            var encryptedEmail = EncryptionHelper.Encrypt(email);
             var emailExists = await db.Customers
-                .AnyAsync(c => c.Email == email && c.CustomerId != customerId);
+                .AnyAsync(c => c.Email == encryptedEmail  && c.CustomerId != customerId);
 
             if (emailExists)
             {
@@ -211,7 +213,7 @@ public class CustomerMethod
                 return;
             }
 
-            customer.Email = email;
+            customer.Email = encryptedEmail;
         }
 
         Console.WriteLine("Current Customer City: " + customer.City);

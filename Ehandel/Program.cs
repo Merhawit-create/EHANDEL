@@ -3,6 +3,7 @@ using Ehandel;
 using Ehandel.Methods;
 using Ehandel.Models;
 using Microsoft.EntityFrameworkCore;
+using Ehandel.Helpers;
 
 internal class Program
 {
@@ -19,9 +20,28 @@ internal class Program
         // Seed customers
         if (!await db.Customers.AnyAsync())
         {
+            var salt1 = HashingHelper.GenerateSalt();
+            var hash1 = HashingHelper.HashWithSalt("Password123", salt1);
+
+            var salt2 = HashingHelper.GenerateSalt();
+            var hash2 = HashingHelper.HashWithSalt("Password123", salt2);
             db.Customers.AddRange(
-                new Customer { Name = "Merhawit", Email = "merhawitristet431@gmail.com", City = "Stockholm" },
-               new Customer { Name = "Anna", Email = "AnnaErik431@gmail.com", City = "Keren" }
+                new Customer
+                {
+                    Name = "Merhawit",
+                    Email = EncryptionHelper.Encrypt("merhawitristet431@gmail.com"),
+                    City = "Stockholm",
+                    PasswordSalt = salt1,
+                    PasswordHash = hash1
+                },
+                new Customer
+                {
+                    Name = "Anna",
+                    Email = EncryptionHelper.Encrypt("AnnaErik431@gmail.com"),
+                    City = "Keren",
+                    PasswordSalt = salt2,
+                    PasswordHash = hash2
+                }
             );
             await db.SaveChangesAsync();
             Console.WriteLine("Customer Seeded DB");
