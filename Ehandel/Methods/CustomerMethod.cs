@@ -1,4 +1,5 @@
-﻿using Ehandel.Models;
+﻿using Ehandel.Helpers;
+using Ehandel.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ehandel.Methods;
@@ -19,7 +20,8 @@ public class CustomerMethod
         Console.WriteLine("Id |   Name   |   City    | Email");
         foreach (var customer in customers)
         {
-            Console.WriteLine($"{customer.CustomerId} |  {customer.Name} |   {customer.City}    | {customer.Email}");
+            var email = EncryptionHelper.Decrypt(customer.Email);
+            Console.WriteLine($"{customer.CustomerId} |  {customer.Name} |   {customer.City}    | {email}");
 
             if (customer.Orders != null && customer.Orders.Count > 0)
             {
@@ -82,7 +84,8 @@ public class CustomerMethod
 
         foreach (var c in customers)
         {
-            Console.WriteLine($"{c.CustomerId} |  {c.Name} | {c.City} | {c.Email}");
+            var email = EncryptionHelper.Decrypt(c.Email);
+            Console.WriteLine($"{c.CustomerId} |  {c.Name} | {c.City} | {email}");
 
             // NYTT: Om du vill visa ordrar här också (som i ListCustomers)
             if (c.Orders != null && c.Orders.Count > 0)
@@ -111,14 +114,17 @@ public class CustomerMethod
         }
 
         Console.Write("Enter Customer Email: ");
-        var email = Console.ReadLine() ?? string.Empty;
+        var email = Console.ReadLine()?.Trim() ?? string.Empty;
 
         if (string.IsNullOrEmpty(email) || email.Length > 100)
         {
             Console.WriteLine("Email is required and max 100 chars.");
             return;
         }
-        var emailExists = await db.Customers.AnyAsync(c => c.Email == email);
+        
+        var encryptedEmail = EncryptionHelper.Encrypt(email);
+        
+        var emailExists = await db.Customers.AnyAsync(c => c.Email == encryptedEmail );
         if (emailExists)
         {
             Console.WriteLine("Email already exists.");
@@ -126,18 +132,31 @@ public class CustomerMethod
         }
 
         Console.Write("City: ");
-        var city = Console.ReadLine() ?? string.Empty;
+        var city = Console.ReadLine()?.Trim() ?? string.Empty;
         if (city.Length > 100)
         {
             Console.WriteLine("City name can't be longer than 100 characters.");
             return;
         }
+        Console.Write("Password: ");
+        var password = Console.ReadLine() ?? string.Empty;
 
+        if (string.IsNullOrWhiteSpace(password))
+        {
+            Console.WriteLine("Password is required.");
+            return;
+        }
+
+        var salt = HashingHelper.GenerateSalt();
+        var hash = HashingHelper.HashWithSalt(password, salt);
+        
         await db.Customers.AddAsync(new Customer
         {
             Name = name,
-            Email = email,
-            City = city
+            Email = encryptedEmail,
+            City = city,
+            PasswordSalt = salt,
+            PasswordHash = hash
         });
 
         try
@@ -175,7 +194,7 @@ public class CustomerMethod
             customer.Name = name;
         }
 
-        Console.WriteLine("Current Customer Email: " + customer.Email);
+        Console.WriteLine("Current Customer Email: " +EncryptionHelper.Decrypt(customer.Email));
         var email = Console.ReadLine()?.Trim() ?? string.Empty;
         if (!string.IsNullOrEmpty(email))
         {
@@ -184,8 +203,9 @@ public class CustomerMethod
                 Console.WriteLine("Email can be max 100 chars.");
                 return;
             }
+            var encryptedEmail = EncryptionHelper.Encrypt(email);
             var emailExists = await db.Customers
-                .AnyAsync(c => c.Email == email && c.CustomerId != customerId);
+                .AnyAsync(c => c.Email == encryptedEmail  && c.CustomerId != customerId);
 
             if (emailExists)
             {
@@ -193,7 +213,7 @@ public class CustomerMethod
                 return;
             }
 
-            customer.Email = email;
+            customer.Email = encryptedEmail;
         }
 
         Console.WriteLine("Current Customer City: " + customer.City);
