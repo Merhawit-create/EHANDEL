@@ -66,6 +66,8 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
             .HasMaxLength(100);
         e.Property(x => x.ProductPrice)
             .IsRequired();
+        e.Property(x => x.StockQuantity)
+            .IsRequired();
     });
     
     modelBuilder.Entity<Order>(e =>

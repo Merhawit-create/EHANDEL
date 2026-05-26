@@ -74,12 +74,12 @@ internal class Program
                 .FirstAsync();
 
             db.Products.AddRange(
-                new Product { ProductPrice = 10, ProductName = "Apple",CategoryId = fruitsId  },
-                new Product { ProductPrice = 20, ProductName = "Orange",CategoryId = fruitsId  },
-                new Product { ProductPrice = 30, ProductName = "Banana" ,CategoryId = fruitsId },
-                new Product { ProductPrice = 40, ProductName = "Milk",CategoryId = drinksId },
-                new Product { ProductPrice = 50, ProductName = "Musli" ,CategoryId = drinksId},
-                new Product { ProductPrice = 60, ProductName = "Water" ,CategoryId = drinksId}
+                new Product { ProductPrice = 10, ProductName = "Apple",CategoryId = fruitsId , StockQuantity = 100  },
+                new Product { ProductPrice = 20, ProductName = "Orange",CategoryId = fruitsId , StockQuantity = 100  },
+                new Product { ProductPrice = 30, ProductName = "Banana" ,CategoryId = fruitsId , StockQuantity = 100 },
+                new Product { ProductPrice = 40, ProductName = "Milk",CategoryId = drinksId , StockQuantity = 200 },
+                new Product { ProductPrice = 50, ProductName = "Musli" ,CategoryId = drinksId, StockQuantity = 10 },
+                new Product { ProductPrice = 60, ProductName = "Water" ,CategoryId = drinksId, StockQuantity = 200 }
             );
             await db.SaveChangesAsync();
             Console.WriteLine("Products Seeded DB");
@@ -215,7 +215,7 @@ internal class Program
     {
         while (true)
         {
-            Console.WriteLine("1 = ListOrders | 2 AddOrder | 5 = return");
+            Console.WriteLine("1 = ListOrders | 2 AddOrder | 3 = OrderSummaryView  | 5 = return");
             var orderMenu = Console.ReadLine() ?? string.Empty;
 
             switch (orderMenu)
@@ -234,6 +234,9 @@ internal class Program
 
                 case "2":
                     await OrderMethod.AddOrderAsync();
+                    break;
+                case "3":
+                    await OrderMethod.ListOrderSummaryViewAsync();
                     break;
 
                 case "5":

@@ -10,6 +10,8 @@ public class Product
     [Required]
     public decimal ProductPrice { get; set; }
     public int CategoryId { get; set; }
+    [Required]
+    public int StockQuantity { get; set; }
     public Category? Category { get; set; }
     [MaxLength(100)]
     public string? Description { get; set; }

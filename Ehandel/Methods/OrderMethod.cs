@@ -152,4 +152,24 @@ public class OrderMethod
             Console.WriteLine("DB Error : " + exception.GetBaseException().Message);
         }
     }
+    
+    public static async Task ListOrderSummaryViewAsync()
+    {
+        using var db = new ShopContext();
+
+        var orders = await db.OrderSummaryViews
+            .AsNoTracking()
+            .OrderByDescending(x => x.OrderDate)
+            .ToListAsync();
+
+        Console.WriteLine("OrderId | Date | Status | Total | Customer | Email");
+
+        foreach (var order in orders)
+        {
+            var email = EncryptionHelper.Decrypt(order.CustomerEmail);
+
+            Console.WriteLine(
+                $"{order.OrderId} | {order.OrderDate} | {order.Status} | {order.TotalAmount:c} | {order.CustomerName} | {email}");
+        }
+    }
 }
