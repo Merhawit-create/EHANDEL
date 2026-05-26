@@ -16,12 +16,27 @@ public class OrderMethod
             .Include(x => x.Customer)
             .AsNoTracking()
             .OrderByDescending(x => x.OrderDate)
-            .ThenByDescending(x => x.TotalAmount); 
+            .ThenByDescending(x => x.OrderId); 
          // Count total orders
         var totalCount = await query.CountAsync();
         // Calculate total pages
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-        // Get only orders for current page
+        if (totalPages == 0)
+        {
+            Console.WriteLine("No orders found.");
+            return;
+        }
+
+        if (page < 1)
+        {
+            page = 1;
+        }
+
+        if (page > totalPages)
+        {
+            Console.WriteLine($"Page {page} does not exist. Showing page {totalPages} instead.");
+            page = totalPages;
+        }
         var orders = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)

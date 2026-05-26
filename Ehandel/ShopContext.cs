@@ -73,6 +73,8 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
     modelBuilder.Entity<Order>(e =>
     {
         e.HasKey(x => x.OrderId);
+        // Index for faster sorting and pagination
+        e.HasIndex(x => new { x.OrderDate, x.OrderId });
         //properties
         e.Property(x => x.OrderDate).IsRequired();
         e.Property(X => X.Status).IsRequired().HasMaxLength(50);
