@@ -13,7 +13,8 @@ public class OrderMethod
         var query = db.Orders
             .Include(x => x.Customer)
             .AsNoTracking()
-            .OrderByDescending(x => x.OrderDate);
+            .OrderByDescending(x => x.OrderDate)
+            .ThenByDescending(x => x.TotalAmount); 
 
         var totalCount = await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
