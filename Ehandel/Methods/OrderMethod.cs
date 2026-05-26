@@ -9,30 +9,39 @@ public class OrderMethod
      public static async Task ListOrdersPagedAsync(int page, int pageSize)
     {
         using var db = new ShopContext();
-
+        // Start timer for performance measurement
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        // Build query
         var query = db.Orders
             .Include(x => x.Customer)
             .AsNoTracking()
             .OrderByDescending(x => x.OrderDate)
             .ThenByDescending(x => x.TotalAmount); 
-
+         // Count total orders
         var totalCount = await query.CountAsync();
+        // Calculate total pages
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-        
+        // Get only orders for current page
         var orders = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-
             .ToListAsync();
+        
+        // Stop timer
+        sw.Stop();
+        // Show query time
+        Console.WriteLine($"Query time: {sw.ElapsedMilliseconds} ms");
         if (totalPages == 0)
         {
             Console.WriteLine("No orders found.");
             return;
         }
         Console.WriteLine($"Page {page} / {totalPages}, pageSize = {pageSize}");
+        // Print orders
         foreach (var order in orders)
-        {
+        {       
             
+            // Decrypt customer email before showing it
             var decryptedEmail = order.Customer != null
                 ? EncryptionHelper.Decrypt(order.Customer.Email)
                 : "No Email";
