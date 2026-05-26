@@ -11,7 +11,7 @@ public class ShopContext : DbContext
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderRow> OrderRows => Set<OrderRow>();
-
+    public DbSet<OrderSummaryView> OrderSummaryViews => Set<OrderSummaryView>();
 
 protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 {
@@ -102,5 +102,11 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
             .OnDelete(DeleteBehavior.Restrict);
         
     });
+    
+    modelBuilder.Entity<OrderSummaryView>(e =>
+    {
+        e.HasNoKey();
+        e.ToView("OrderSummaryView");
+    });   
 }
 }
