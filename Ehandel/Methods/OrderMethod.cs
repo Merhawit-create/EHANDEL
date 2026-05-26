@@ -41,11 +41,14 @@ public class OrderMethod
         }
     }
 
-    // Lärarens AddOrderAsync flyttad hit och fixad1
+    // AddOrderAsync - Metod för att lägga till en order med orderrader. Använd transaktioner för att säkerställa att antingen hela ordern läggs till eller ingen alls, särskilt när du uppdaterar lagersaldot.
     public static async Task AddOrderAsync()
     {
         using var db = new ShopContext();
+        await using var transaction = await db.Database.BeginTransactionAsync();
 
+        try
+        {
         var customers = await db.Customers.AsNoTracking()
             .OrderBy(x => x.CustomerId)
             .ToListAsync();
@@ -93,10 +96,10 @@ public class OrderMethod
                 Console.WriteLine("No Product Found");
                 return;
             }
-
+            Console.WriteLine("ProductId | Name | Price | Stock");
             foreach (var product in products)
             {
-                Console.WriteLine($"{product.ProductId} | {product.ProductName} | {product.ProductPrice}");
+                Console.WriteLine($"{product.ProductId} | {product.ProductName} | {product.ProductPrice}| Stock: {product.StockQuantity}");
             }
 
             Console.Write("ProductId: ");
@@ -119,7 +122,11 @@ public class OrderMethod
                 Console.WriteLine("Invalid input of quantity");
                 continue;
             }
-
+            // Om lagret är för lågt kastas ett fel och transaktionen rollbackas.
+            if (chosenProduct.StockQuantity < quantity)
+            {
+                throw new Exception($"Not enough stock for {chosenProduct.ProductName}. Available: {chosenProduct.StockQuantity}");
+            }
             var row = new OrderRow
             {
                 ProductId = productId,
@@ -128,27 +135,30 @@ public class OrderMethod
             };
 
             OrderRows.Add(row);
+            //  Uppdaterar lagersaldo.
+            chosenProduct.StockQuantity -= quantity;
         }
-
-        /*if (order.OrderRows.Count == 0)
+        //  Stoppar order om inga orderrader har lagts till.
+        if (!OrderRows.Any())
         {
-            Console.WriteLine("Order cancelled (no rows added).");
+            Console.WriteLine("Order cancelled. No order rows added.");
+            await transaction.RollbackAsync();
             return;
-        }*/
-
-     
+        }
 
         order.OrderRows =OrderRows;
         order.TotalAmount = OrderRows.Sum(x => x.UnitPrice*x.Quantity);
         db.Orders.Add(order);
-
-        try
-        {
-            await db.SaveChangesAsync();
-            Console.WriteLine($"Order {order.OrderId} created, Total = {order.TotalAmount:c} creat!");
+        
+        await db.SaveChangesAsync();
+        await transaction.CommitAsync();
+        Console.WriteLine($"Order {order.OrderId} created, Total = {order.TotalAmount:c} creat!");
         }
         catch (DbUpdateException exception)
         {
+            // Om något går fel ångras hela ordern.
+            await transaction.RollbackAsync();
+            Console.WriteLine("Order cancelled. Rollback executed.");
             Console.WriteLine("DB Error : " + exception.GetBaseException().Message);
         }
     }
