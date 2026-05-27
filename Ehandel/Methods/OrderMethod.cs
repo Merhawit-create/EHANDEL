@@ -74,117 +74,124 @@ public class OrderMethod
 
         try
         {
-        var customers = await db.Customers.AsNoTracking()
-            .OrderBy(x => x.CustomerId)
-            .ToListAsync();
-
-        if (!customers.Any())
-        {
-            Console.WriteLine("No Customer Found");
-            return;
-        }
-
-        foreach (var customer in customers)
-        {
-            Console.WriteLine($"{customer.CustomerId} | {customer.Name} | {customer.Email}");
-        }
-
-        Console.Write("CustomerId: ");
-        if (!int.TryParse(Console.ReadLine(), out var customerId) ||
-            !customers.Any(x => x.CustomerId == customerId))
-        {
-            Console.WriteLine("Invalid input of customerId");
-            return;
-        }
-
-        var order = new Order
-        {
-            CustomerId = customerId,
-            OrderDate = DateTime.Now,
-            Status = "Pending",
-            TotalAmount = 0
-           
-        };
-        var OrderRows = new List<OrderRow>();
-        while (true)
-        {
-            Console.WriteLine("Add Order row? Y/N");
-            var answer = Console.ReadLine()?.Trim().ToLowerInvariant();
-            if (answer != "y") break;
-
-            var products = await db.Products.AsNoTracking()
-                .OrderBy(x => x.ProductId)
+            var customers = await db.Customers.AsNoTracking()
+                .OrderBy(x => x.CustomerId)
                 .ToListAsync();
 
-            if (!products.Any())
+            if (!customers.Any())
             {
-                Console.WriteLine("No Product Found");
+                Console.WriteLine("No Customer Found");
                 return;
             }
-            Console.WriteLine("ProductId | Name | Price | Stock");
-            foreach (var product in products)
+
+            foreach (var customer in customers)
             {
-                Console.WriteLine($"{product.ProductId} | {product.ProductName} | {product.ProductPrice}| Stock: {product.StockQuantity}");
+                Console.WriteLine($"{customer.CustomerId} | {customer.Name} | {customer.Email}");
             }
 
-            Console.Write("ProductId: ");
-            if (!int.TryParse(Console.ReadLine(), out var productId))
+            Console.Write("CustomerId: ");
+            if (!int.TryParse(Console.ReadLine(), out var customerId) ||
+                !customers.Any(x => x.CustomerId == customerId))
             {
-                Console.WriteLine("Invalid input of productId");
-                continue;
+                Console.WriteLine("Invalid input of customerId");
+                return;
             }
 
-            var chosenProduct = await db.Products.FirstOrDefaultAsync(x => x.ProductId == productId);
-            if (chosenProduct == null)
+            var order = new Order
             {
-                Console.WriteLine("Product not found");
-                continue;
-            }
+                CustomerId = customerId,
+                OrderDate = DateTime.Now,
+                Status = "Pending",
+                TotalAmount = 0
 
-            Console.Write("Quantity: ");
-            if (!int.TryParse(Console.ReadLine(), out var quantity) || quantity <= 0)
-            {
-                Console.WriteLine("Invalid input of quantity");
-                continue;
-            }
-            // Om lagret är för lågt kastas ett fel och transaktionen rollbackas.
-            if (chosenProduct.StockQuantity < quantity)
-            {
-                throw new Exception($"Not enough stock for {chosenProduct.ProductName}. Available: {chosenProduct.StockQuantity}");
-            }
-            var row = new OrderRow
-            {
-                ProductId = productId,
-                Quantity = quantity,
-                UnitPrice = chosenProduct.ProductPrice
             };
+            var OrderRows = new List<OrderRow>();
+            while (true)
+            {
+                Console.WriteLine("Add Order row? Y/N");
+                var answer = Console.ReadLine()?.Trim().ToLowerInvariant();
+                if (answer != "y") break;
 
-            OrderRows.Add(row);
-            //  Uppdaterar lagersaldo.
-            chosenProduct.StockQuantity -= quantity;
-        }
-        //  Stoppar order om inga orderrader har lagts till.
-        if (!OrderRows.Any())
-        {
-            Console.WriteLine("Order cancelled. No order rows added.");
-            await transaction.RollbackAsync();
-            return;
-        }
+                var products = await db.Products.AsNoTracking()
+                    .OrderBy(x => x.ProductId)
+                    .ToListAsync();
 
-        order.OrderRows =OrderRows;
-        order.TotalAmount = OrderRows.Sum(x => x.UnitPrice*x.Quantity);
-        db.Orders.Add(order);
-        
-        await db.SaveChangesAsync();
-        await transaction.CommitAsync();
-        Console.WriteLine($"Order {order.OrderId} created, Total = {order.TotalAmount:c} creat!");
+                if (!products.Any())
+                {
+                    Console.WriteLine("No Product Found");
+                    return;
+                }
+
+                Console.WriteLine("ProductId | Name | Price | Stock");
+                foreach (var product in products)
+                {
+                    Console.WriteLine(
+                        $"{product.ProductId} | {product.ProductName} | {product.ProductPrice}| Stock: {product.StockQuantity}");
+                }
+
+                Console.Write("ProductId: ");
+                if (!int.TryParse(Console.ReadLine(), out var productId))
+                {
+                    Console.WriteLine("Invalid input of productId");
+                    continue;
+                }
+
+                var chosenProduct = await db.Products.FirstOrDefaultAsync(x => x.ProductId == productId);
+                if (chosenProduct == null)
+                {
+                    Console.WriteLine("Product not found");
+                    continue;
+                }
+
+                Console.Write("Quantity: ");
+                if (!int.TryParse(Console.ReadLine(), out var quantity) || quantity <= 0)
+                {
+                    Console.WriteLine("Invalid input of quantity");
+                    continue;
+                }
+
+                // Om lagret är för lågt kastas ett fel och transaktionen rollbackas.
+                if (chosenProduct.StockQuantity < quantity)
+                {
+                    throw new Exception(
+                        $"Not enough stock for {chosenProduct.ProductName}. Available: {chosenProduct.StockQuantity}");
+                }
+
+                var row = new OrderRow
+                {
+                    ProductId = productId,
+                    Quantity = quantity,
+                    UnitPrice = chosenProduct.ProductPrice
+                };
+
+                OrderRows.Add(row);
+                //  Uppdaterar lagersaldo.
+                chosenProduct.StockQuantity -= quantity;
+            }
+
+            //  Stoppar order om inga orderrader har lagts till.
+            if (!OrderRows.Any())
+            {
+                Console.WriteLine("Order cancelled. No order rows added.");
+                await transaction.RollbackAsync();
+                return;
+            }
+
+            order.OrderRows = OrderRows;
+            order.TotalAmount = OrderRows.Sum(x => x.UnitPrice * x.Quantity);
+            db.Orders.Add(order);
+
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+            Console.WriteLine($"Order {order.OrderId} created, Total = {order.TotalAmount:c} creat!");
         }
-        catch (DbUpdateException exception)
+    
+    catch (Exception exception)
         {
             // Om något går fel ångras hela ordern.
             await transaction.RollbackAsync();
             Console.WriteLine("Order cancelled. Rollback executed.");
-            Console.WriteLine("DB Error : " + exception.GetBaseException().Message);
+            Console.WriteLine("Error : " + exception.GetBaseException().Message);
         }
     }
     
