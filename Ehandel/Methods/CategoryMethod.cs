@@ -16,7 +16,6 @@ public class CategoryMethod
                 .AsNoTracking()
                 .OrderBy(p => p.Name)
                 .ToListAsync();
-
             Console.WriteLine("Id | Name");
             foreach (var row in rows)
             {
@@ -28,25 +27,20 @@ public class CategoryMethod
         public static async Task AddCategoryAsync()
         {
             using var db = new ShopContext();
-
             Console.Write("Category name: ");
             var name = Console.ReadLine()?.Trim() ?? string.Empty;
-
             if (string.IsNullOrWhiteSpace(name) || name.Length > 100)
             {
                 Console.WriteLine("Category name is required and max 100 chars.");
                 return;
             }
-
             var exists = await db.Categories.AnyAsync(x => x.Name == name);
             if (exists)
             {
                 Console.WriteLine("Category already exists.");
                 return;
             }
-
             await db.Categories.AddAsync(new Category { Name = name });
-
             try
             {
                 await db.SaveChangesAsync();
@@ -69,11 +63,9 @@ public class CategoryMethod
                 Console.WriteLine("Category not found.");
                 return;
             }
-
             Console.WriteLine($"Current name: {category.Name}");
             Console.Write("New name: ");
             var newName = Console.ReadLine()?.Trim() ?? string.Empty;
-
             if (string.IsNullOrWhiteSpace(newName))
             {
                 Console.WriteLine("No changes made.");
@@ -86,14 +78,12 @@ public class CategoryMethod
             }
             var exists = await db.Categories
                 .AnyAsync(x => x.Name == newName && x.CategoryId != categoryId);
-
             if (exists)
             {
                 Console.WriteLine("Category name already exists.");
                 return;
             }
             category.Name = newName;
-
             try
             {
                 await db.SaveChangesAsync();
@@ -105,7 +95,7 @@ public class CategoryMethod
             }
         }
 
-        // NYTT: Tar bort kategori.
+        //  Tar bort kategori.
         public static async Task DeleteCategoryAsync(int categoryId)
         {
             using var db = new ShopContext();
@@ -113,21 +103,17 @@ public class CategoryMethod
             var category = await db.Categories
                 .Include(x => x.Products)
                 .FirstOrDefaultAsync(x => x.CategoryId == categoryId);
-
             if (category == null)
             {
                 Console.WriteLine("Category not found.");
                 return;
             }
-
             if (category.Products.Any())
             {
                 Console.WriteLine("Cannot delete category because it contains products.");
                 return;
             }
-
             db.Categories.Remove(category);
-
             try
             {
                 await db.SaveChangesAsync();

@@ -16,7 +16,6 @@ public class ShopContext : DbContext
 protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 {
     var dbPath = Path.Combine(AppContext.BaseDirectory, "shop.db");
-
     optionsBuilder.UseSqlite($"Filename={dbPath}");
 }
 
@@ -37,20 +36,16 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Sätter primär nyckel
         e.HasKey(x => x.CustomerId);
-
-        // Säkerställer samma regler som data annotatuibs ( required + MaxLength)
+    // Säkerställer samma regler som data annotatuibs ( required + MaxLength)
         e.Property(x => x.Name)
             .IsRequired().HasMaxLength(100);
         e.Property(x => x.Email)
             .IsRequired().HasMaxLength(300);
         e.Property(x => x.City).HasMaxLength(100);
-        
         e.Property(x => x.PasswordHash)
             .IsRequired();
-
         e.Property(x => x.PasswordSalt)
             .IsRequired();
-
         e.HasIndex(x => x.Email).IsUnique();
        
     });
@@ -58,7 +53,6 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
     modelBuilder.Entity<Product>(e =>
     {
         e.HasKey(x => x.ProductId);
-
         e.Property(x => x.ProductName)
             .IsRequired()
             .HasMaxLength(100);
@@ -91,7 +85,6 @@ protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // PK
         e.HasKey(x => x.OrderRowId);
-
         e.Property(x => x.Quantity).IsRequired();
         e.Property(x => x.UnitPrice).IsRequired();
         // order 1 -N orderRows 
