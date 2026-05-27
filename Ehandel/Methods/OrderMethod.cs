@@ -9,147 +9,271 @@ public class OrderMethod
      public static async Task ListOrdersPagedAsync(int page, int pageSize)
     {
         using var db = new ShopContext();
-
+        // Start timer for performance measurement
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        // Build query
         var query = db.Orders
             .Include(x => x.Customer)
             .AsNoTracking()
-            .OrderByDescending(x => x.OrderDate);
-
+            .OrderByDescending(x => x.OrderDate)
+            .ThenByDescending(x => x.OrderId); 
+         // Count total orders
         var totalCount = await query.CountAsync();
+        // Calculate total pages
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-        
+        if (totalPages == 0)
+        {
+            Console.WriteLine("No orders found.");
+            return;
+        }
+        if (page < 1)
+        {
+            page = 1;
+        }
+        if (page > totalPages)
+        {
+            Console.WriteLine($"Page {page} does not exist. Showing page {totalPages} instead.");
+            page = totalPages;
+        }
         var orders = await query
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-
             .ToListAsync();
+        // Stop timer
+        sw.Stop();
+        // Show query time
+        Console.WriteLine($"Query time: {sw.ElapsedMilliseconds} ms");
         if (totalPages == 0)
         {
             Console.WriteLine("No orders found.");
             return;
         }
         Console.WriteLine($"Page {page} / {totalPages}, pageSize = {pageSize}");
+        // Print orders
         foreach (var order in orders)
-        {
-            
+        { 
+            // Decrypt customer email before showing it
             var decryptedEmail = order.Customer != null
                 ? EncryptionHelper.Decrypt(order.Customer.Email)
                 : "No Email";
-
             Console.WriteLine(
                 $"{order.OrderId} | {order.OrderDate} | {order.TotalAmount:c} | {decryptedEmail}");
         }
     }
 
-    // Lärarens AddOrderAsync flyttad hit och fixad1
+    // AddOrderAsync - Metod för att lägga till en order med orderrader. Använd transaktioner för att säkerställa att antingen hela ordern läggs till eller ingen alls, särskilt när du uppdaterar lagersaldot.
     public static async Task AddOrderAsync()
     {
         using var db = new ShopContext();
-
-        var customers = await db.Customers.AsNoTracking()
-            .OrderBy(x => x.CustomerId)
-            .ToListAsync();
-
-        if (!customers.Any())
-        {
-            Console.WriteLine("No Customer Found");
-            return;
-        }
-
-        foreach (var customer in customers)
-        {
-            Console.WriteLine($"{customer.CustomerId} | {customer.Name} | {customer.Email}");
-        }
-
-        Console.Write("CustomerId: ");
-        if (!int.TryParse(Console.ReadLine(), out var customerId) ||
-            !customers.Any(x => x.CustomerId == customerId))
-        {
-            Console.WriteLine("Invalid input of customerId");
-            return;
-        }
-
-        var order = new Order
-        {
-            CustomerId = customerId,
-            OrderDate = DateTime.Now,
-            Status = "Pending",
-            TotalAmount = 0
-           
-        };
-        var OrderRows = new List<OrderRow>();
-        while (true)
-        {
-            Console.WriteLine("Add Order row? Y/N");
-            var answer = Console.ReadLine()?.Trim().ToLowerInvariant();
-            if (answer != "y") break;
-
-            var products = await db.Products.AsNoTracking()
-                .OrderBy(x => x.ProductId)
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        try
+        { 
+            var customers = await db.Customers.AsNoTracking()
+                .OrderBy(x => x.CustomerId)
                 .ToListAsync();
-
-            if (!products.Any())
+            if (!customers.Any())
             {
-                Console.WriteLine("No Product Found");
+                Console.WriteLine("No Customer Found");
                 return;
             }
-
-            foreach (var product in products)
+            foreach (var customer in customers)
             {
-                Console.WriteLine($"{product.ProductId} | {product.ProductName} | {product.ProductPrice}");
+                Console.WriteLine($"{customer.CustomerId} | {customer.Name} | {customer.Email}");
             }
-
-            Console.Write("ProductId: ");
-            if (!int.TryParse(Console.ReadLine(), out var productId))
+            Console.Write("CustomerId: ");
+            if (!int.TryParse(Console.ReadLine(), out var customerId) ||
+                !customers.Any(x => x.CustomerId == customerId))
             {
-                Console.WriteLine("Invalid input of productId");
-                continue;
+                Console.WriteLine("Invalid input of customerId");
+                return;
             }
-
-            var chosenProduct = await db.Products.FirstOrDefaultAsync(x => x.ProductId == productId);
-            if (chosenProduct == null)
+            var order = new Order
             {
-                Console.WriteLine("Product not found");
-                continue;
-            }
-
-            Console.Write("Quantity: ");
-            if (!int.TryParse(Console.ReadLine(), out var quantity) || quantity <= 0)
-            {
-                Console.WriteLine("Invalid input of quantity");
-                continue;
-            }
-
-            var row = new OrderRow
-            {
-                ProductId = productId,
-                Quantity = quantity,
-                UnitPrice = chosenProduct.ProductPrice
+                CustomerId = customerId,
+                OrderDate = DateTime.Now,
+                Status = "Pending",
+                TotalAmount = 0
             };
-
-            OrderRows.Add(row);
+            var OrderRows = new List<OrderRow>();
+            while (true)
+            {
+                Console.WriteLine("Add Order row? Y/N");
+                var answer = Console.ReadLine()?.Trim().ToLowerInvariant();
+                if (answer != "y") break;
+                var products = await db.Products.AsNoTracking()
+                    .OrderBy(x => x.ProductId)
+                    .ToListAsync();
+                if (!products.Any())
+                {
+                    Console.WriteLine("No Product Found");
+                    return;
+                }
+                Console.WriteLine("ProductId | Name | Price | Stock");
+                foreach (var product in products)
+                {
+                    Console.WriteLine(
+                        $"{product.ProductId} | {product.ProductName} | {product.ProductPrice}| Stock: {product.StockQuantity}");
+                }
+                Console.Write("ProductId: ");
+                if (!int.TryParse(Console.ReadLine(), out var productId))
+                {
+                    Console.WriteLine("Invalid input of productId");
+                    continue;
+                }
+                var chosenProduct = await db.Products.FirstOrDefaultAsync(x => x.ProductId == productId);
+                if (chosenProduct == null)
+                {
+                    Console.WriteLine("Product not found");
+                    continue;
+                }
+                Console.Write("Quantity: ");
+                if (!int.TryParse(Console.ReadLine(), out var quantity) || quantity <= 0)
+                {
+                    Console.WriteLine("Invalid input of quantity");
+                    continue;
+                }
+                // Om lagret är för lågt kastas ett fel och transaktionen rollbackas.
+                if (chosenProduct.StockQuantity < quantity)
+                {
+                    throw new Exception(
+                        $"Not enough stock for {chosenProduct.ProductName}. Available: {chosenProduct.StockQuantity}");
+                }
+                var row = new OrderRow
+                {
+                    ProductId = productId,
+                    Quantity = quantity,
+                    UnitPrice = chosenProduct.ProductPrice
+                };
+                OrderRows.Add(row);
+                //  Uppdaterar lagersaldo.
+                chosenProduct.StockQuantity -= quantity;
+            }
+            //  Stoppar order om inga orderrader har lagts till.
+            if (!OrderRows.Any())
+            {
+                Console.WriteLine("Order cancelled. No order rows added.");
+                await transaction.RollbackAsync();
+                return;
+            }
+            order.OrderRows = OrderRows;
+            order.TotalAmount = OrderRows.Sum(x => x.UnitPrice * x.Quantity);
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+            await transaction.CommitAsync();
+            Console.WriteLine($"Order {order.OrderId} created, Total = {order.TotalAmount:c} creat!");
         }
-
-        /*if (order.OrderRows.Count == 0)
+    catch (Exception exception)
         {
-            Console.WriteLine("Order cancelled (no rows added).");
+            // Om något går fel ångras hela ordern.
+            await transaction.RollbackAsync();
+            Console.WriteLine("Order cancelled. Rollback executed.");
+            Console.WriteLine("Error : " + exception.GetBaseException().Message);
+        }
+    }
+    
+    //Add ListOrderSummaryViewAsync 
+    public static async Task ListOrderSummaryViewAsync()
+    {
+        using var db = new ShopContext();
+        var orders = await db.OrderSummaryViews
+            .AsNoTracking()
+            .OrderByDescending(x => x.OrderDate)
+            .ToListAsync();
+        Console.WriteLine("OrderId | Date | Status | Total | Customer | Email");
+        foreach (var order in orders)
+        {
+            var email = EncryptionHelper.Decrypt(order.CustomerEmail);
+            Console.WriteLine(
+                $"{order.OrderId} | {order.OrderDate} | {order.Status} | {order.TotalAmount:c} | {order.CustomerName} | {email}");
+        }
+    }
+
+    // Updates the status of an existing order.
+    public static async Task EditOrderStatusAsync(int orderId)
+    {
+        using var db = new ShopContext();
+        var order = await db.Orders.FirstOrDefaultAsync(x => x.OrderId == orderId);
+        if (order == null)
+        {
+            Console.WriteLine("Order not found.");
             return;
-        }*/
-
-     
-
-        order.OrderRows =OrderRows;
-        order.TotalAmount = OrderRows.Sum(x => x.UnitPrice*x.Quantity);
-        db.Orders.Add(order);
-
+        }
+        Console.WriteLine($"Current status: {order.Status}");
+        Console.Write("New status (Pending, Completed, Cancelled): ");
+        var status = Console.ReadLine()?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(status) || status.Length > 50)
+        {
+            Console.WriteLine("Invalid status.");
+            return;
+        }
+        order.Status = status;
         try
         {
             await db.SaveChangesAsync();
-            Console.WriteLine($"Order {order.OrderId} created, Total = {order.TotalAmount:c} creat!");
+            Console.WriteLine("Order status updated.");
         }
-        catch (DbUpdateException exception)
+        catch (DbUpdateException ex)
         {
-            Console.WriteLine("DB Error : " + exception.GetBaseException().Message);
+            Console.WriteLine("DB Error: " + ex.GetBaseException().Message);
         }
     }
+    
+    // Shows one order with its customer and order rows.
+    public static async Task ShowOrderDetailsAsync(int orderId)
+    {
+        using var db = new ShopContext();
+        var order = await db.Orders
+            .Include(x => x.Customer)
+            .Include(x => x.OrderRows)
+            .ThenInclude(x => x.Product)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.OrderId == orderId);
+        if (order == null)
+        {
+            Console.WriteLine("Order not found.");
+            return;
+        }
+        var customerEmail = order.Customer != null
+            ? EncryptionHelper.Decrypt(order.Customer.Email)
+            : "No email";
+        Console.WriteLine("===== Order Details =====");
+        Console.WriteLine($"OrderId: {order.OrderId}");
+        Console.WriteLine($"Date: {order.OrderDate}");
+        Console.WriteLine($"Status: {order.Status}");
+        Console.WriteLine($"Customer: {order.Customer?.Name}");
+        Console.WriteLine($"Customer Email: {customerEmail}");
+        Console.WriteLine($"TotalAmount: {order.TotalAmount:c}");
+        Console.WriteLine("----- Order Rows -----");
+        foreach (var row in order.OrderRows)
+        {
+            var lineTotal = row.Quantity * row.UnitPrice;
+            Console.WriteLine(
+                $"{row.Product?.ProductName} | Quantity: {row.Quantity} | UnitPrice: {row.UnitPrice:c} | LineTotal: {lineTotal:c}");
+        }
+    }
+    
+    // Updates the status of an existing order.
+    public static async Task DeleteOrderAsync(int orderId)
+    {
+        using var db = new ShopContext();
+        var order = await db.Orders
+            .Include(x => x.OrderRows)
+            .FirstOrDefaultAsync(x => x.OrderId == orderId);
+        if (order == null)
+        {
+            Console.WriteLine("Order not found.");
+            return;
+        }
+        db.Orders.Remove(order);
+        try
+        {
+            await db.SaveChangesAsync();
+            Console.WriteLine("Order deleted.");
+        }
+        catch (DbUpdateException ex)
+        {
+            Console.WriteLine("DB Error: " + ex.GetBaseException().Message);
+        }
+    }
+    
 }

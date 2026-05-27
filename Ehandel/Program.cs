@@ -22,7 +22,6 @@ internal class Program
         {
             var salt1 = HashingHelper.GenerateSalt();
             var hash1 = HashingHelper.HashWithSalt("Password123", salt1);
-
             var salt2 = HashingHelper.GenerateSalt();
             var hash2 = HashingHelper.HashWithSalt("Password123", salt2);
             db.Customers.AddRange(
@@ -53,12 +52,10 @@ internal class Program
                 new Category { Name = "Fruits" },   
                 new Category { Name = "Drinks" }
             );
-
             await db.SaveChangesAsync();
             Console.WriteLine("Categories seeded DB");
         }
-
-
+        
         // Seed products
         if (!await db.Products.AnyAsync())
         {
@@ -72,14 +69,13 @@ internal class Program
                 .Where(c => c.Name == "Drinks")
                 .Select(c => c.CategoryId)
                 .FirstAsync();
-
             db.Products.AddRange(
-                new Product { ProductPrice = 10, ProductName = "Apple",CategoryId = fruitsId  },
-                new Product { ProductPrice = 20, ProductName = "Orange",CategoryId = fruitsId  },
-                new Product { ProductPrice = 30, ProductName = "Banana" ,CategoryId = fruitsId },
-                new Product { ProductPrice = 40, ProductName = "Milk",CategoryId = drinksId },
-                new Product { ProductPrice = 50, ProductName = "Musli" ,CategoryId = drinksId},
-                new Product { ProductPrice = 60, ProductName = "Water" ,CategoryId = drinksId}
+                new Product { ProductPrice = 10, ProductName = "Apple",CategoryId = fruitsId , StockQuantity = 100  },
+                new Product { ProductPrice = 20, ProductName = "Orange",CategoryId = fruitsId , StockQuantity = 100  },
+                new Product { ProductPrice = 30, ProductName = "Banana" ,CategoryId = fruitsId , StockQuantity = 100 },
+                new Product { ProductPrice = 40, ProductName = "Milk",CategoryId = drinksId , StockQuantity = 200 },
+                new Product { ProductPrice = 50, ProductName = "Musli" ,CategoryId = drinksId, StockQuantity = 10 },
+                new Product { ProductPrice = 60, ProductName = "Water" ,CategoryId = drinksId, StockQuantity = 200 }
             );
             await db.SaveChangesAsync();
             Console.WriteLine("Products Seeded DB");
@@ -96,22 +92,18 @@ internal class Program
                 case "1":
                     await CustomerMenuAsync();
                     break;
-
                 case "2":
                     await OrderMenuAsync();
                     break;
-
                 case "3":
                     await ProductMenuAsync();
                     break;
                 case "4":
                     await CategoryMenuAsync();
                     break;
-
                 case "5":
                     Console.WriteLine("Exiting...");
                     return;
-
                 default:
                     Console.WriteLine("Please enter a valid option");
                     break;
@@ -132,11 +124,9 @@ internal class Program
                 case "1":
                     await CustomerMethod.ListCustomersAsync();
                     break;
-
                 case "2":
                     await CustomerMethod.AddCustomerAsync();
                     break;
-
                 case "3":
                     Console.Write("CustomerId: ");
                     if (int.TryParse(Console.ReadLine(), out var editId))
@@ -144,7 +134,6 @@ internal class Program
                     else
                         Console.WriteLine("Invalid id");
                     break;
-
                 case "4":
                     Console.Write("CustomerId: ");
                    if (int.TryParse(Console.ReadLine(), out var deleteId))
@@ -155,11 +144,9 @@ internal class Program
                 case "5":
                     await CustomerMethod.FilterByCityAsync();
                     break;
-
                 case "6":
                     Console.WriteLine("Returning...");
                     return;
-
                 default:
                     Console.WriteLine("Please enter a valid option");
                     break;
@@ -169,7 +156,7 @@ internal class Program
 
     // -------- Product Menu --------
     private static async Task ProductMenuAsync()
-    {
+    { 
         while (true)
         {
             Console.WriteLine("1 = ListProduct | 2 AddProduct | 3 = EditProduct | 4 = DeleteProduct | 5 = return");
@@ -198,11 +185,9 @@ internal class Program
                     else
                         Console.WriteLine("Invalid id");
                     break;
-
                 case "5":
                     Console.WriteLine("Returning...");
                     return;
-
                 default:
                     Console.WriteLine("Please enter a valid option");
                     break;
@@ -215,9 +200,8 @@ internal class Program
     {
         while (true)
         {
-            Console.WriteLine("1 = ListOrders | 2 AddOrder | 5 = return");
+            Console.WriteLine("1 = ListOrders | 2 AddOrder | 3 OrderSummaryView | 4 OrderDetails | 5 EditOrderStatus | 6 DeleteOrder | 7 = return");
             var orderMenu = Console.ReadLine() ?? string.Empty;
-
             switch (orderMenu)
             {
                 case "1":
@@ -228,24 +212,47 @@ internal class Program
                     Console.Write("PageSize: ");
                     if (!int.TryParse(Console.ReadLine(), out var pageSize))
                         pageSize = 10;
-
                     await OrderMethod.ListOrdersPagedAsync(page, pageSize);
                     break;
-
                 case "2":
                     await OrderMethod.AddOrderAsync();
                     break;
-
+                case "3":
+                    await OrderMethod.ListOrderSummaryViewAsync();
+                    break;
+                case "4":
+                    Console.Write("OrderId: ");
+                    if (int.TryParse(Console.ReadLine(), out var detailsId))
+                        await OrderMethod.ShowOrderDetailsAsync(detailsId);
+                    else
+                        Console.WriteLine("Invalid id");
+                    break;
+                
                 case "5":
+                    Console.Write("OrderId: ");
+                    if (int.TryParse(Console.ReadLine(), out var editId))
+                        await OrderMethod.EditOrderStatusAsync(editId);
+                    else
+                        Console.WriteLine("Invalid id");
+                    break;
+
+                case "6":
+                    Console.Write("OrderId: ");
+                    if (int.TryParse(Console.ReadLine(), out var deleteId))
+                        await OrderMethod.DeleteOrderAsync(deleteId);
+                    else
+                        Console.WriteLine("Invalid id");
+                    break;
+                case "7":
                     Console.WriteLine("Returning...");
                     return;
-
                 default:
                     Console.WriteLine("Please enter a valid option");
                     break;
             }
         }
     }
+    
     // NYTT: Meny för full CRUD på kategorier
     private static async Task CategoryMenuAsync()
     {
@@ -253,7 +260,6 @@ internal class Program
         {
             Console.WriteLine("1 = ListCategories | 2 = AddCategory | 3 = EditCategory | 4 = DeleteCategory | 5 = Return");
             var categoryMenu = Console.ReadLine() ?? string.Empty;
-
             switch (categoryMenu)
             {
                 case "1":

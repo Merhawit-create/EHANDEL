@@ -106,31 +106,25 @@ public class CustomerMethod
 
         Console.Write("Enter Customer Name: ");
         var name = Console.ReadLine()?.Trim() ?? string.Empty;
-
         if (string.IsNullOrEmpty(name) || name.Length > 100)
         {
             Console.WriteLine("Name is required and max 100 chars.");
             return;
         }
-
         Console.Write("Enter Customer Email: ");
         var email = Console.ReadLine()?.Trim() ?? string.Empty;
-
         if (string.IsNullOrEmpty(email) || email.Length > 100)
         {
             Console.WriteLine("Email is required and max 100 chars.");
             return;
         }
-        
         var encryptedEmail = EncryptionHelper.Encrypt(email);
-        
         var emailExists = await db.Customers.AnyAsync(c => c.Email == encryptedEmail );
         if (emailExists)
         {
             Console.WriteLine("Email already exists.");
             return;
         }
-
         Console.Write("City: ");
         var city = Console.ReadLine()?.Trim() ?? string.Empty;
         if (city.Length > 100)
@@ -140,16 +134,13 @@ public class CustomerMethod
         }
         Console.Write("Password: ");
         var password = Console.ReadLine() ?? string.Empty;
-
         if (string.IsNullOrWhiteSpace(password))
         {
             Console.WriteLine("Password is required.");
             return;
         }
-
         var salt = HashingHelper.GenerateSalt();
         var hash = HashingHelper.HashWithSalt(password, salt);
-        
         await db.Customers.AddAsync(new Customer
         {
             Name = name,
@@ -158,7 +149,6 @@ public class CustomerMethod
             PasswordSalt = salt,
             PasswordHash = hash
         });
-
         try
         {
             await db.SaveChangesAsync();
@@ -174,14 +164,12 @@ public class CustomerMethod
     public static async Task EditCustomerAsync(int customerId)
     {
         using var db = new ShopContext();
-
         var customer = await db.Customers.FirstOrDefaultAsync(c => c.CustomerId == customerId);
         if (customer == null)
         {
             Console.WriteLine("Customer not found.");
             return;
         }
-
         Console.WriteLine("Current Customer Name: " + customer.Name);
         var name = Console.ReadLine()?.Trim() ?? string.Empty;
         if (!string.IsNullOrEmpty(name))
@@ -193,7 +181,6 @@ public class CustomerMethod
             }
             customer.Name = name;
         }
-
         Console.WriteLine("Current Customer Email: " +EncryptionHelper.Decrypt(customer.Email));
         var email = Console.ReadLine()?.Trim() ?? string.Empty;
         if (!string.IsNullOrEmpty(email))
@@ -206,16 +193,13 @@ public class CustomerMethod
             var encryptedEmail = EncryptionHelper.Encrypt(email);
             var emailExists = await db.Customers
                 .AnyAsync(c => c.Email == encryptedEmail  && c.CustomerId != customerId);
-
             if (emailExists)
             {
                 Console.WriteLine("Email already exists.");
                 return;
             }
-
             customer.Email = encryptedEmail;
         }
-
         Console.WriteLine("Current Customer City: " + customer.City);
         var city = Console.ReadLine()?.Trim() ?? string.Empty;
         if (!string.IsNullOrEmpty(city))
@@ -227,7 +211,6 @@ public class CustomerMethod
             }
             customer.City = city;
         }
-
         try
         {
             await db.SaveChangesAsync();
@@ -240,11 +223,9 @@ public class CustomerMethod
     }
 
     // Deletecustomer <id>/
-    
     public static async Task DeleteCustomerAsync(int customerId)
     {
         using var db = new ShopContext();
-
         var customer = await db.Customers
             .Include(c => c.Orders)
             .FirstOrDefaultAsync(c => c.CustomerId == customerId);
@@ -253,9 +234,7 @@ public class CustomerMethod
             Console.WriteLine("Customer not found.");
             return;
         }
-      
         db.Customers.Remove(customer);
-
         try
         {
             await db.SaveChangesAsync();

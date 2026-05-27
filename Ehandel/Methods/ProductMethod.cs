@@ -14,8 +14,6 @@ public class ProductMethod
             .Include(p => p.Category)
             .OrderBy(p => p.ProductName)
             .ToListAsync();
-        
-        
         Console.WriteLine("Id | Name | Price | Category | Description");
         foreach (var row in rows)
         {
@@ -25,44 +23,37 @@ public class ProductMethod
 
    
     
-    // NYTT: Lägg till produkt.
+    //  Lägg till produkt.
     public static async Task AddProductAsync()
     {
         using var db = new ShopContext();
-
         var categories = await db.Categories
             .AsNoTracking()
             .OrderBy(x => x.Name)
             .ToListAsync();
-
         if (!categories.Any())
         {
             Console.WriteLine("No categories found. Add a category first.");
             return;
         }
-
         Console.WriteLine("Available categories:");
         foreach (var category in categories)
         {
             Console.WriteLine($"{category.CategoryId} | {category.Name}");
         }
-
         Console.Write("Product name: ");
         var name = Console.ReadLine()?.Trim() ?? string.Empty;
-
         if (string.IsNullOrWhiteSpace(name) || name.Length > 100)
         {
             Console.WriteLine("Product name is required and max 100 chars.");
             return;
         }
-
         Console.Write("Price: ");
         if (!decimal.TryParse(Console.ReadLine(), out var price) || price < 0)
         {
             Console.WriteLine("Invalid price.");
             return;
         }
-
         Console.Write("CategoryId: ");
         if (!int.TryParse(Console.ReadLine(), out var categoryId) ||
             !categories.Any(x => x.CategoryId == categoryId))
@@ -70,10 +61,8 @@ public class ProductMethod
             Console.WriteLine("Invalid category id.");
             return;
         }
-
         Console.Write("Description: ");
         var description = Console.ReadLine()?.Trim();
-
         await db.Products.AddAsync(new Product
         {
             ProductName = name,
@@ -81,7 +70,6 @@ public class ProductMethod
             CategoryId = categoryId,
             Description = description
         });
-
         try
         {
             await db.SaveChangesAsync();
@@ -93,23 +81,20 @@ public class ProductMethod
         }
     }
 
-    // NYTT: Redigera produkt.
+    //  Redigera produkt.
     public static async Task EditProductAsync(int productId)
     {
         using var db = new ShopContext();
-
         var product = await db.Products.FirstOrDefaultAsync(x => x.ProductId == productId);
         if (product == null)
         {
             Console.WriteLine("Product not found.");
             return;
         }
-
         var categories = await db.Categories
             .AsNoTracking()
             .OrderBy(x => x.Name)
             .ToListAsync();
-
         Console.WriteLine($"Current name: {product.ProductName}");
         Console.Write("New name (leave empty to keep): ");
         var name = Console.ReadLine()?.Trim() ?? string.Empty;
@@ -117,7 +102,6 @@ public class ProductMethod
         {
             product.ProductName = name;
         }
-
         Console.WriteLine($"Current price: {product.ProductPrice}");
         Console.Write("New price (leave empty to keep): ");
         var priceInput = Console.ReadLine()?.Trim() ?? string.Empty;
@@ -130,7 +114,6 @@ public class ProductMethod
             }
             product.ProductPrice = price;
         }
-
         Console.WriteLine($"Current description: {product.Description}");
         Console.Write("New description (leave empty to keep): ");
         var description = Console.ReadLine()?.Trim() ?? string.Empty;
@@ -138,14 +121,12 @@ public class ProductMethod
         {
             product.Description = description;
         }
-
         Console.WriteLine($"Current categoryId: {product.CategoryId}");
         Console.WriteLine("Available categories:");
         foreach (var category in categories)
         {
             Console.WriteLine($"{category.CategoryId} | {category.Name}");
         }
-
         Console.Write("New categoryId (leave empty to keep): ");
         var categoryInput = Console.ReadLine()?.Trim() ?? string.Empty;
         if (!string.IsNullOrWhiteSpace(categoryInput))
@@ -156,10 +137,8 @@ public class ProductMethod
                 Console.WriteLine("Invalid categoryId.");
                 return;
             }
-
             product.CategoryId = categoryId;
         }
-
         try
         {
             await db.SaveChangesAsync();
@@ -171,31 +150,26 @@ public class ProductMethod
         }
     }
 
-    // NYTT: Ta bort produkt.
+    //  Ta bort produkt.
     public static async Task DeleteProductAsync(int productId)
     {
         using var db = new ShopContext();
-
         var product = await db.Products
             .Include(x => x.OrderRows)
             .FirstOrDefaultAsync(x => x.ProductId == productId);
-
         if (product == null)
         {
             Console.WriteLine("Product not found.");
             return;
         }
-
         if (product.OrderRows.Any())
         {
             Console.WriteLine("Cannot delete product because it is used in orders.");
             return;
         }
-
         db.Products.Remove(product);
-
         try
-        {
+        { 
             await db.SaveChangesAsync();
             Console.WriteLine("Product deleted.");
         }

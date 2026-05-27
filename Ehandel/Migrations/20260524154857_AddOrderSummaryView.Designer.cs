@@ -3,6 +3,7 @@ using System;
 using Ehandel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Ehandel.Migrations
 {
     [DbContext(typeof(ShopContext))]
-    partial class ShopContextModelSnapshot : ModelSnapshot
+    [Migration("20260524154857_AddOrderSummaryView")]
+    partial class AddOrderSummaryView
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.11");
@@ -96,8 +99,6 @@ namespace Ehandel.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("OrderDate", "OrderId");
-
                     b.ToTable("Orders");
                 });
 
@@ -130,10 +131,6 @@ namespace Ehandel.Migrations
 
             modelBuilder.Entity("Ehandel.Models.OrderSummaryView", b =>
                 {
-                    b.Property<string>("CustomerEmail")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("CustomerName")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -176,9 +173,6 @@ namespace Ehandel.Migrations
 
                     b.Property<decimal>("ProductPrice")
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("StockQuantity")
-                        .HasColumnType("INTEGER");
 
                     b.HasKey("ProductId");
 
