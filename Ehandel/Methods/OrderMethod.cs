@@ -214,4 +214,70 @@ public class OrderMethod
                 $"{order.OrderId} | {order.OrderDate} | {order.Status} | {order.TotalAmount:c} | {order.CustomerName} | {email}");
         }
     }
+    
+    
+    // Updates the status of an existing order.
+    public static async Task EditOrderStatusAsync(int orderId)
+    {
+        using var db = new ShopContext();
+
+        var order = await db.Orders.FirstOrDefaultAsync(x => x.OrderId == orderId);
+
+        if (order == null)
+        {
+            Console.WriteLine("Order not found.");
+            return;
+        }
+
+        Console.WriteLine($"Current status: {order.Status}");
+        Console.Write("New status (Pending, Completed, Cancelled): ");
+        var status = Console.ReadLine()?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(status) || status.Length > 50)
+        {
+            Console.WriteLine("Invalid status.");
+            return;
+        }
+
+        order.Status = status;
+
+        try
+        {
+            await db.SaveChangesAsync();
+            Console.WriteLine("Order status updated.");
+        }
+        catch (DbUpdateException ex)
+        {
+            Console.WriteLine("DB Error: " + ex.GetBaseException().Message);
+        }
+    }
+    
+    // Updates the status of an existing order.
+    public static async Task DeleteOrderAsync(int orderId)
+    {
+        using var db = new ShopContext();
+
+        var order = await db.Orders
+            .Include(x => x.OrderRows)
+            .FirstOrDefaultAsync(x => x.OrderId == orderId);
+
+        if (order == null)
+        {
+            Console.WriteLine("Order not found.");
+            return;
+        }
+
+        db.Orders.Remove(order);
+
+        try
+        {
+            await db.SaveChangesAsync();
+            Console.WriteLine("Order deleted.");
+        }
+        catch (DbUpdateException ex)
+        {
+            Console.WriteLine("DB Error: " + ex.GetBaseException().Message);
+        }
+    }
+    
 }

@@ -215,7 +215,8 @@ internal class Program
     {
         while (true)
         {
-            Console.WriteLine("1 = ListOrders | 2 AddOrder | 3 = OrderSummaryView  | 5 = return");
+            
+            Console.WriteLine("1 = ListOrders | 2 AddOrder | 3 OrderSummaryView | 4 EditOrderStatus | 5 DeleteOrder | 6 = return");
             var orderMenu = Console.ReadLine() ?? string.Empty;
 
             switch (orderMenu)
@@ -238,8 +239,22 @@ internal class Program
                 case "3":
                     await OrderMethod.ListOrderSummaryViewAsync();
                     break;
+                case "4":
+                    Console.Write("OrderId: ");
+                    if (int.TryParse(Console.ReadLine(), out var editId))
+                        await OrderMethod.EditOrderStatusAsync(editId);
+                    else
+                        Console.WriteLine("Invalid id");
+                    break;
 
                 case "5":
+                    Console.Write("OrderId: ");
+                    if (int.TryParse(Console.ReadLine(), out var deleteId))
+                        await OrderMethod.DeleteOrderAsync(deleteId);
+                    else
+                        Console.WriteLine("Invalid id");
+                    break;
+                case "6":
                     Console.WriteLine("Returning...");
                     return;
 
